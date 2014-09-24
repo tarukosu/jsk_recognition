@@ -8,6 +8,7 @@
 #include <cv_bridge/cv_bridge.h>
 #include <std_srvs/Empty.h>
 #include <std_msgs/Empty.h>
+#include <std_msgs/Float32.h>
 
 #include <boost/thread/mutex.hpp>
 #include <boost/foreach.hpp>
@@ -37,6 +38,8 @@ protected:
   image_transport::ImageTransport *it_;
   ros::ServiceServer srv_;
   ros::Subscriber sub_;
+
+  ros::Subscriber sub_resize_x_, sub_resize_y_, sub_msg_per_second_;
 
   double resize_x_, resize_y_;
   int dst_width_, dst_height_;
@@ -105,6 +108,9 @@ protected:
 
     cp_ = it_->advertiseCamera("output/image", max_queue_size_);
 
+    sub_resize_x_ = pnh.subscribe("resize_x", 1, &ImageResizer::resize_x_cb, this);
+    sub_resize_y_ = pnh.subscribe("resize_y", 1, &ImageResizer::resize_y_cb, this);
+    sub_msg_per_second_ = pnh.subscribe("msg_per_second", 1, &ImageResizer::msg_per_second_cb, this);
   }
 
   ~ImageResizer() { }
@@ -121,6 +127,22 @@ protected:
     NODELET_INFO("resize_scale_y : %f", resize_y_);
     NODELET_INFO("message period : %f", period_.toSec());
   }
+
+  void resize_x_cb( const std_msgs::Float32ConstPtr msg){
+    resize_x_ = msg->data;
+    NODELET_INFO("resize_scale_x : %f", resize_x_);
+  }
+
+  void resize_y_cb( std_msgs::Float32ConstPtr msg){
+    resize_y_ = msg->data;
+    NODELET_INFO("resize_scale_y : %f", resize_y_);
+  }
+
+  void msg_per_second_cb( std_msgs::Float32ConstPtr msg){
+    period_ = ros::Duration(1.0/msg->data);
+    NODELET_INFO("message period : %f", period_.toSec());
+  }
+
 
   void snapshot_msg_cb (const std_msgs::EmptyConstPtr msg) {
     boost::mutex::scoped_lock lock(mutex_);
