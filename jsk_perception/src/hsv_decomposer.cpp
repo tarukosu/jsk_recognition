@@ -63,21 +63,24 @@ namespace jsk_perception
     const sensor_msgs::Image::ConstPtr& image_msg)
   {
     cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(
-      image_msg, sensor_msgs::image_encodings::BGR8);
+      image_msg, image_msg->encoding);
     cv::Mat image = cv_ptr->image;
     cv::Mat hsv_image;
-    cv::Mat hue = cv::Mat::zeros(image.rows, image.cols, CV_8UC1);
-    cv::Mat saturation = cv::Mat::zeros(image.rows, image.cols, CV_8UC1);
-    cv::Mat value = cv::Mat::zeros(image.rows, image.cols, CV_8UC1);
-    cv::cvtColor(image, hsv_image, CV_BGR2HSV);
-    for (size_t j = 0; j < hsv_image.rows; j++) {
-      for (size_t i = 0; i < hsv_image.cols; i++) {
-        cv::Vec3b hsv = hsv_image.at<cv::Vec3b>(j, i);
-        hue.at<uchar>(j, i) = hsv[0] % 180; // up to 180
-        saturation.at<uchar>(j, i) = hsv[1];
-        value.at<uchar>(j, i) = hsv[2];
-      }
+    std::vector<cv::Mat> hsv_planes;
+    if (image_msg->encoding == sensor_msgs::image_encodings::BGR8) {
+      cv::cvtColor(image, hsv_image, CV_BGR2HSV);
     }
+    else if (image_msg->encoding == sensor_msgs::image_encodings::RGB8) {
+      cv::cvtColor(image, hsv_image, CV_RGB2HSV);
+    }
+    else {
+      NODELET_ERROR("unsupported format to HSV: %s", image_msg->encoding.c_str());
+      return;
+    }
+    cv::split(hsv_image, hsv_planes);
+    cv::Mat hue = hsv_planes[0];
+    cv::Mat saturation = hsv_planes[1];
+    cv::Mat value = hsv_planes[2];
     pub_h_.publish(cv_bridge::CvImage(
                      image_msg->header,
                      sensor_msgs::image_encodings::MONO8,
