@@ -92,6 +92,9 @@ namespace jsk_pcl_ros
       pnh_->param("frame_id", frame_id, std::string("base_link"));
       frame_id_list_.push_back(frame_id);
       pose_list_.push_back(pose);
+
+      pnh_->param("once", once_, true);
+      new_request_ = false;
     }
     else {                      // multiple interst
       // ~initial_pos_list
@@ -235,6 +238,7 @@ namespace jsk_pcl_ros
     boost::mutex::scoped_lock lock(mutex_);
     frame_id_list_[0] = pose->header.frame_id;
     tf::poseMsgToEigen(pose->pose, pose_list_[0]);
+    new_request_ = true;
   }
 
   void AttentionClipper::boxCallback(
@@ -358,6 +362,10 @@ namespace jsk_pcl_ros
     const sensor_msgs::PointCloud2::ConstPtr& msg)
   {
     boost::mutex::scoped_lock lock(mutex_);
+    if(once_ && new_request_ == false)
+      return;
+    new_request_ = false;
+
     vital_checker_->poke();
     try {
       // 1. transform pointcloud
