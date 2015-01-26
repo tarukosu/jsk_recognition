@@ -1,0 +1,38 @@
+<launch>
+  <arg name="USE_HEAD_POINTCLOUD" default="true" />
+
+  <arg name="HEAD_SELECTED" default="/openni_c2/depth_registered/points"/>
+
+  <arg name="BASE_FRAME" default="/base_footprint" />
+  <arg name="HEAD_NODELET_MANAGER" default="/openni_c2/openni_c2_nodelet_manager"/>
+
+  <arg name="GDB" default="false" />
+
+  <!-- we will have add_grid at /pointcloud_roi/add_grid -->
+  <!-- voxel_grid -->
+  <node pkg="nodelet" type="nodelet"
+	name="pcl_roi_robot_manager" args="manager"
+	launch-prefix="xterm -e gdb --args"
+	if="$(arg GDB)"
+	output="screen"/>
+  <node pkg="nodelet" type="nodelet"
+	name="pcl_roi_robot_manager" args="manager"
+	unless="$(arg GDB)"
+	output="screen"/>
+
+  <node if="$(arg USE_HEAD_POINTCLOUD)"
+	pkg="nodelet" type="nodelet"
+	name="voxel_grid_manager"
+	args="load jsk_pcl/VoxelGridDownsampleManager pcl_roi_robot_manager"
+	output="screen" clear_params="true">
+	<!-- args="standalone jsk_pcl/VoxelGridDownsampleManager" -->
+    <param name="base_frame" value="$(arg BASE_FRAME)"/>
+    <param name="max_points" value="100"/>
+    <param name="rate" value="0.1"/>
+
+    <remap from="~input" to="$(arg HEAD_SELECTED)" />
+    <remap from="~add_grid" to="add_grid"/>
+    <remap from="~input_pose" to="/bounding_box_cropper_pose"/>
+  </node>
+</launch>
+<!-- args="load jsk_pcl/VoxelGridDownsampleManager pcl_roi_robot_manager" -->

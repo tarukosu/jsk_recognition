@@ -1,0 +1,13 @@
+<launch>
+  <node pkg="nodelet" type="nodelet"
+	name="pcl_roi_remote_manager" args="manager"
+	output="screen" alaunch-prefix="xterm -e gdb --args" />
+
+
+  <node pkg="nodelet" type="nodelet"
+	name="voxel_grid_decoder"
+	args="load jsk_pcl/VoxelGridDownsampleDecoder /pcl_roi_remote_manager"
+	output="screen" clear_params="true">
+    <remap from="~input" to="voxel_grid_manager/output_encoded" />
+  </node>
+</launch>
