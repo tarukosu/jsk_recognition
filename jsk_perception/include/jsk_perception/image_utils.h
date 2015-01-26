@@ -2,7 +2,7 @@
 /*********************************************************************
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2013, Ryohei Ueda and JSK Lab
+ *  Copyright (c) 2015, JSK Lab
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -15,7 +15,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/o2r other materials provided
  *     with the distribution.
- *   * Neither the name of the Willow Garage nor the names of its
+ *   * Neither the name of the JSK Lab nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -33,52 +33,15 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-#ifndef JSK_PCL_ROS_VOXEL_GRID_DOWNSAMPLE_MANAGER_H_
-#define JSK_PCL_ROS_VOXEL_GRID_DOWNSAMPLE_MANAGER_H_
 
-// ros
-#include <ros/ros.h>
-#include <ros/names.h>
-#include <sensor_msgs/PointCloud2.h>
-#include <visualization_msgs/Marker.h>
-#include "jsk_pcl_ros/tf_listener_singleton.h"
+#ifndef JSK_PERCEPTION_IMAGE_UTILS_
+#define JSK_PERCEPTION_IMAGE_UTILS_
 
-// pcl
-#include <pcl_ros/pcl_nodelet.h>
-#include <pcl/point_types.h>
-#include <jsk_topic_tools/connection_based_nodelet.h>
+#include <opencv2/opencv.hpp>
 
-namespace jsk_pcl_ros
+namespace jsk_perception
 {
-  class VoxelGridDownsampleManager : public jsk_topic_tools::ConnectionBasedNodelet
-  {
-  protected:
-    tf::TransformListener* tf_listener;
-    std::vector<visualization_msgs::Marker::ConstPtr> grid_;
-    void addGrid(const visualization_msgs::Marker::ConstPtr &new_box);
-    void addPose(const geometry_msgs::PoseStamped::ConstPtr &msg);
-    virtual void subscribe();
-    virtual void unsubscribe();
-  private:
-    void pointCB(const sensor_msgs::PointCloud2ConstPtr &input);
-    void clearAll();
-    void initializeGrid(void);
-    ros::Subscriber sub_;
-    ros::Subscriber bounding_box_sub_;
-    ros::Subscriber pose_sub_;
-    ros::Publisher pub_;
-    ros::Publisher pub_encoded_;
-    size_t max_points_;
-    double rate_;
-    double resolution_;
-    double scale_x_;
-    double scale_y_;
-    double scale_z_;
-    int sequence_id_;           // incremented by every add_box
-    std::string base_frame_;
-    bool new_request_;
-    virtual void onInit();
-  };
+  cv::Rect boundingRectOfMaskImage(const cv::Mat& image);
 }
 
-#endif  // JSK_PCL_ROS_VOXEL_GRID_DOWNSAMPLE_MANAGER_H
+#endif

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(jsk_perception)
 
 find_package(catkin REQUIRED COMPONENTS
-  mk message_generation imagesift std_msgs sensor_msgs geometry_msgs cv_bridge
+  mk message_generation std_msgs sensor_msgs geometry_msgs cv_bridge
   image_geometry image_transport driver_base dynamic_reconfigure cmake_modules
   roscpp nodelet rostest tf rospack
   jsk_topic_tools pcl_ros jsk_pcl_ros)
@@ -55,7 +55,7 @@ catkin_package(
   CATKIN_DEPENDS std_msgs sensor_msgs geometry_msgs message_runtime
   DEPENDS OpenCV
   INCLUDE_DIRS include
-  LIBRARIES
+  LIBRARIES jsk_perception
 )
 
 execute_process(
@@ -116,7 +116,8 @@ jsk_perception_nodelet(src/multiply_mask_image.cpp "jsk_perception/MultiplyMaskI
 jsk_perception_nodelet(src/find_object_on_plane.cpp "jsk_perception/FindObjectOnPlane" "find_object_on_plane")
 # compiling jsk_perception library for nodelet
 add_library(${PROJECT_NAME} SHARED ${jsk_perception_nodelet_sources}
-  ${CMAKE_CURRENT_BINARY_DIR}/build/patched-SLIC-Superpixels/slic.cpp)
+  ${CMAKE_CURRENT_BINARY_DIR}/build/patched-SLIC-Superpixels/slic.cpp
+  src/image_utils.cpp)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencfg ${PROJECT_NAME}_gencpp)
 
@@ -159,6 +160,8 @@ install(DIRECTORY sample launch euslisp
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
         USE_SOURCE_PERMISSIONS
 )
+install(DIRECTORY include/${PROJECT_NAME}/
+        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 
 install(FILES jsk_perception_nodelets.xml DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 
