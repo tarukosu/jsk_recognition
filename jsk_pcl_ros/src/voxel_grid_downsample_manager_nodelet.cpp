@@ -53,6 +53,10 @@ namespace jsk_pcl_ros
   
   void VoxelGridDownsampleManager::pointCB(const sensor_msgs::PointCloud2ConstPtr &input)
   {
+    if(new_request_ == false)
+      return;
+    new_request_ = false;
+
     try {
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr output_cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
@@ -178,8 +182,25 @@ namespace jsk_pcl_ros
     }
   }
 
+  void VoxelGridDownsampleManager::addPose(const geometry_msgs::PoseStamped::ConstPtr &msg)
+  {
+    ++sequence_id_;
+    new_request_ = true;
+    visualization_msgs::Marker::Ptr new_box(new visualization_msgs::Marker);
+    new_box->header = msg->header;
+    new_box->pose = msg->pose;
+    new_box->scale.x = scale_x_;
+    new_box->scale.y = scale_y_;
+    new_box->scale.z = scale_z_;
+    new_box->color.r = resolution_;
+    grid_.clear();
+    grid_.push_back(new_box);
+    NODELET_DEBUG("updating pose");
+  }
+
   void VoxelGridDownsampleManager::addGrid(const visualization_msgs::Marker::ConstPtr &new_box)
   {
+    new_request_ = true;
     ++sequence_id_;
     // check we have new_box->id in our bounding_boxes_
     if (new_box->id == -1) {
@@ -223,12 +244,18 @@ namespace jsk_pcl_ros
     tf_listener = TfListenerSingleton::getInstance();
     initializeGrid();
     sequence_id_ = 0;
+    new_request_ = false;
 
     int max_points_param;
     pnh_->param("max_points", max_points_param, 300);
     pnh_->param("rate", rate_, 1.0);
     max_points_  = max_points_param;
     
+    pnh_->param("x", scale_x_, 1.0);
+    pnh_->param("y", scale_y_, 1.0);
+    pnh_->param("z", scale_z_, 1.0);
+    pnh_->param("resolution", resolution_, 1.0);
+
     pub_ = advertise<sensor_msgs::PointCloud2>(
       *pnh_, "output", 1);
     pub_encoded_ = advertise<jsk_pcl_ros::SlicedPointCloud>(
@@ -242,6 +269,8 @@ namespace jsk_pcl_ros
                            this);
     bounding_box_sub_ = pnh_->subscribe("add_grid", 1, &VoxelGridDownsampleManager::addGrid,
                                         this);
+    pose_sub_ = pnh_->subscribe("input_pose", 1, &VoxelGridDownsampleManager::addPose,
+                           this);
   }
 
   void VoxelGridDownsampleManager::unsubscribe()

@@ -56,6 +56,7 @@ namespace jsk_pcl_ros
     tf::TransformListener* tf_listener;
     std::vector<visualization_msgs::Marker::ConstPtr> grid_;
     void addGrid(const visualization_msgs::Marker::ConstPtr &new_box);
+    void addPose(const geometry_msgs::PoseStamped::ConstPtr &msg);
     virtual void subscribe();
     virtual void unsubscribe();
   private:
@@ -64,12 +65,18 @@ namespace jsk_pcl_ros
     void initializeGrid(void);
     ros::Subscriber sub_;
     ros::Subscriber bounding_box_sub_;
+    ros::Subscriber pose_sub_;
     ros::Publisher pub_;
     ros::Publisher pub_encoded_;
     size_t max_points_;
     double rate_;
+    double resolution_;
+    double scale_x_;
+    double scale_y_;
+    double scale_z_;
     int sequence_id_;           // incremented by every add_box
     std::string base_frame_;
+    bool new_request_;
     virtual void onInit();
   };
 }
